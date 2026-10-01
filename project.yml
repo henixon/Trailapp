@@ -2,8 +2,7 @@
 #
 # SETUP (on your Mac):
 #   1. brew install xcodegen
-#   2. Replace YOUR_TEAM_ID below with your Apple Developer Team ID
-#      (developer.apple.com/account → Membership details, 10 characters).
+#   2. Your Apple Developer Team ID is filled in below (M6ZPV2R8F8).
 #   3. xcodegen generate   (or: make generate)
 #   4. Open TrailApp.xcodeproj in Xcode 16 and build.
 #
@@ -21,8 +20,8 @@ options:
 
 settings:
   CODE_SIGN_STYLE: Automatic
-  # TODO: replace with your 10-character Apple Developer Team ID.
-  DEVELOPMENT_TEAM: YOUR_TEAM_ID
+  # Apple Developer Team ID (Kei Hon Lam, membership via 2027-09-04).
+  DEVELOPMENT_TEAM: M6ZPV2R8F8
 
 targets:
   TrailApp:
