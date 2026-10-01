@@ -1,0 +1,87 @@
+# XcodeGen project for TrailApp.
+#
+# SETUP (on your Mac):
+#   1. brew install xcodegen
+#   2. Replace YOUR_TEAM_ID below with your Apple Developer Team ID
+#      (developer.apple.com/account → Membership details, 10 characters).
+#   3. xcodegen generate   (or: make generate)
+#   4. Open TrailApp.xcodeproj in Xcode 16 and build.
+#
+# The iOS app embeds the watchOS app (application.watchapp2). Shared/ is
+# compiled into both targets — it is intentionally limited to Foundation +
+# CoreLocation so it builds on both platforms.
+
+name: TrailApp
+
+options:
+  bundleIdPrefix: com.example.trailapp
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+
+settings:
+  CODE_SIGN_STYLE: Automatic
+  # TODO: replace with your 10-character Apple Developer Team ID.
+  DEVELOPMENT_TEAM: YOUR_TEAM_ID
+
+targets:
+  TrailApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: TrailApp
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp
+    info:
+      properties:
+        CFBundleDisplayName: TrailApp
+        NSLocationWhenInUseUsageDescription: TrailApp shows your location on the route map while you browse imported routes.
+        # "Open in TrailApp" support for .gpx files (Files, Safari, AirDrop).
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX route file
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.example.trailapp.gpx
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.example.trailapp.gpx
+            UTTypeDescription: GPX route file
+            UTTypeConformsTo:
+              - public.xml
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - gpx
+              public.mime-type:
+                - application/gpx+xml
+    entitlements:
+      path: TrailApp/TrailApp.entitlements
+    dependencies:
+      # XcodeGen embeds the watch app into the iOS app from this dependency.
+      - target: TrailAppWatch
+
+  TrailAppWatch:
+    type: application.watchapp2
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: TrailAppWatch
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp.watchkitapp
+    info:
+      properties:
+        CFBundleDisplayName: TrailApp
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.example.trailapp
+        NSLocationWhenInUseUsageDescription: TrailApp tracks your position along the route during hikes, including in the background while a workout is active.
+        NSHealthShareUsageDescription: TrailApp reads your heart rate during hikes to display it on the navigation screen.
+        NSHealthUpdateUsageDescription: TrailApp saves your hikes as workouts.
+        # Keeps GPS delivery alive with the wrist down during a hike.
+        UIBackgroundModes:
+          - workout-processing
+    entitlements:
+      path: TrailAppWatch/TrailAppWatch.entitlements
