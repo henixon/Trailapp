@@ -29,6 +29,9 @@ DerivedData/
 # Generated Info.plists (created by `xcodegen generate` from project.yml)
 TrailApp/Info.plist
 TrailAppWatch/Info.plist
+# Generated entitlements (created by `xcodegen generate` from project.yml)
+TrailApp/TrailApp.entitlements
+TrailAppWatch/TrailAppWatch.entitlements
 
 # Signing / secrets
 *.mobileprovision

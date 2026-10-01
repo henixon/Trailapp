@@ -90,3 +90,6 @@ targets:
           - workout-processing
     entitlements:
       path: TrailAppWatch/TrailAppWatch.entitlements
+      properties:
+        # Required for HKWorkoutSession + heart-rate streaming on watchOS.
+        com.apple.developer.healthkit: true
