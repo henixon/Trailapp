@@ -35,6 +35,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp
     info:
+      # XcodeGen requires `path` here; it generates this Info.plist from
+      # `properties` below when the file doesn't exist yet.
+      path: TrailApp/Info.plist
       properties:
         CFBundleDisplayName: TrailApp
         NSLocationWhenInUseUsageDescription: TrailApp shows your location on the route map while you browse imported routes.
@@ -72,6 +75,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp.watchkitapp
     info:
+      # XcodeGen requires `path` here; it generates this Info.plist from
+      # `properties` below when the file doesn't exist yet.
+      path: TrailAppWatch/Info.plist
       properties:
         CFBundleDisplayName: TrailApp
         WKApplication: true

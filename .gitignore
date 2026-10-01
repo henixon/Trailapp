@@ -26,6 +26,9 @@ DerivedData/
 
 # XcodeGen
 # (keep project.yml; the generated .xcodeproj is ignored above)
+# Generated Info.plists (created by `xcodegen generate` from project.yml)
+TrailApp/Info.plist
+TrailAppWatch/Info.plist
 
 # Signing / secrets
 *.mobileprovision
