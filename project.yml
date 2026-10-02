@@ -31,6 +31,9 @@ targets:
     sources:
       - path: TrailApp
       - path: Shared
+    # Bundled sample GPX routes (imported into the library on first launch).
+    resources:
+      - path: SampleRoutes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp
