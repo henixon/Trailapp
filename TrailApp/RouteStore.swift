@@ -18,23 +18,30 @@ final class RouteStore: ObservableObject {
 
     // MARK: - Bundled samples
 
-    private static let didImportSamplesKey = "didImportSampleRoutes"
+    private static let importedSamplesKey = "importedBundledSampleFiles"
 
-    /// Imports the GPX files bundled in SampleRoutes/ on first launch so the
-    /// library isn't empty. Runs once (flagged in UserDefaults).
+    /// Import newly bundled routes once, including routes added in app updates.
+    /// (J's local improvement, merged 2026-10-02.)
     func importSampleRoutesIfNeeded() {
-        guard !UserDefaults.standard.bool(forKey: Self.didImportSamplesKey) else { return }
-        UserDefaults.standard.set(true, forKey: Self.didImportSamplesKey)
+        let defaults = UserDefaults.standard
+        var imported = Set(defaults.stringArray(forKey: Self.importedSamplesKey) ?? [])
+        imported.formUnion(routes.compactMap(\.sourceFileName))
+        // Preserve the previous one-time import, including samples the user deleted.
+        if defaults.bool(forKey: "didImportSampleRoutes") {
+            imported.formUnion(["discovery-bay-hermitage-trail-mui-woo.gpx", "sunny-bay-to-mui-wo.gpx"])
+        }
         guard let urls = Bundle.main.urls(forResourcesWithExtension: "gpx", subdirectory: "SampleRoutes") else { return }
         for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+            guard !imported.contains(url.lastPathComponent) else { continue }
             do {
                 let route = try importGPX(from: url)
-                // Wikiloc files are named "Wikiloc - <Trail>"; drop the prefix.
                 let clean = route.name.replacingOccurrences(
                     of: "^Wikiloc - ", with: "", options: .regularExpression)
                 if clean != route.name {
                     rename(route: route, to: clean)
                 }
+                imported.insert(url.lastPathComponent)
+                defaults.set(imported.sorted(), forKey: Self.importedSamplesKey)
             } catch {
                 lastError = "Couldn't load sample route \(url.lastPathComponent): \(error.localizedDescription)"
             }
