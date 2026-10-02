@@ -46,8 +46,6 @@ targets:
       properties:
         CFBundleDisplayName: TrailApp
         NSLocationWhenInUseUsageDescription: TrailApp shows your location on the route map while you browse imported routes.
-        NSHealthShareUsageDescription: TrailApp reads your workouts and heart-rate data to show your hiking history.
-        NSHealthUpdateUsageDescription: TrailApp saves your hikes as workouts.
         # "Open in TrailApp" support for .gpx files (Files, Safari, AirDrop).
         CFBundleDocumentTypes:
           - CFBundleTypeName: GPX route file
@@ -67,10 +65,11 @@ targets:
                 - application/gpx+xml
     entitlements:
       path: TrailApp/TrailApp.entitlements
-      properties:
-        # HealthKit on iPhone (activity history reads/writes workouts).
-        # Without this declared, `xcodegen generate` strips it from the file.
-        com.apple.developer.healthkit: true
+      # No HealthKit entitlement on iOS yet — the phone doesn't call
+      # HealthKit until T1.7 (activity history). When it does, add
+      # `properties: { com.apple.developer.healthkit: true }` here AND
+      # enable the capability on the App ID (Xcode / developer portal),
+      # otherwise automatic signing fails with a profile error.
     dependencies:
       # XcodeGen embeds the watch app into the iOS app from this dependency.
       - target: TrailAppWatch
