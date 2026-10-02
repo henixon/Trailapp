@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import WatchKit
 
 /// Receives RoutePackage files from the iPhone and persists them locally on
 /// the watch. Packages are small JSON (kilobytes); the offline tile pack —

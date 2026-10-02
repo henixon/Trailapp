@@ -49,8 +49,6 @@ final class WorkoutManager: ObservableObject {
     // MARK: - Lifecycle
 
     /// Starts the workout session, location streaming, HR query, and timer.
-    /// NOTE (verify on device/Xcode 16): HKWorkoutSession async start/pause/
-    /// resume/stop API availability on the watchOS 10 SDK.
     func start() async throws {
         try await requestAuthorization()
 
@@ -62,32 +60,32 @@ final class WorkoutManager: ObservableObject {
         self.session = session
 
         // Keeps CoreLocation delivery alive in the background.
-        backgroundSession = try CLBackgroundActivitySession()
+        backgroundSession = CLBackgroundActivitySession()
 
         startHeartRateQuery(from: Date())
         startElapsedClock()
         startLocationStream()
 
-        try await session.start()
+        session.startActivity(with: Date())
         state = .active
     }
 
     func pause() async {
         guard state == .active else { return }
-        await session?.pause()
+        session?.pause()
         pauseElapsedClock()
         state = .paused
     }
 
     func resume() async {
         guard state == .paused else { return }
-        await session?.resume()
+        session?.resume()
         resumeElapsedClock()
         state = .active
     }
 
     func end() async {
-        await session?.stop()
+        session?.end()
         locationTask?.cancel()
         locationTask = nil
         locationContinuation?.finish()
@@ -113,10 +111,14 @@ final class WorkoutManager: ObservableObject {
         locationContinuation = continuation
         locationTask = Task { [weak self] in
             // `.fitness` tunes accuracy/power for workout use.
-            // NOTE (verify on Xcode 16): exact liveUpdates signature on watchOS 10 SDK.
-            for await update in CLLocationUpdate.liveUpdates(.fitness) {
-                guard let location = update.location else { continue }
-                self?.locationContinuation?.yield(location)
+            do {
+                for try await update in CLLocationUpdate.liveUpdates(.fitness) {
+                    guard let location = update.location else { continue }
+                    self?.locationContinuation?.yield(location)
+                }
+            } catch {
+                self?.locationContinuation?.finish()
+                NSLog("Location updates stopped: %@", error.localizedDescription)
             }
         }
     }
@@ -134,12 +136,16 @@ final class WorkoutManager: ObservableObject {
             anchor: heartRateAnchor,
             limit: HKObjectQueryNoLimit
         ) { [weak self] _, samples, _, newAnchor, _ in
-            self?.heartRateAnchor = newAnchor
-            self?.ingest(samples: samples)
+            Task { @MainActor [weak self] in
+                self?.heartRateAnchor = newAnchor
+                self?.ingest(samples: samples)
+            }
         }
         query.updateHandler = { [weak self] _, samples, _, newAnchor, _ in
-            self?.heartRateAnchor = newAnchor
-            self?.ingest(samples: samples)
+            Task { @MainActor [weak self] in
+                self?.heartRateAnchor = newAnchor
+                self?.ingest(samples: samples)
+            }
         }
         heartRateQuery = query
         healthStore.execute(query)

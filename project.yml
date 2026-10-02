@@ -6,7 +6,7 @@
 #   3. xcodegen generate   (or: make generate)
 #   4. Open TrailApp.xcodeproj in Xcode 16 and build.
 #
-# The iOS app embeds the watchOS app (application.watchapp2). Shared/ is
+# The iOS app embeds the watchOS app (modern single-target application). Shared/ is
 # compiled into both targets — it is intentionally limited to Foundation +
 # CoreLocation so it builds on both platforms.
 
@@ -31,9 +31,11 @@ targets:
     sources:
       - path: TrailApp
       - path: Shared
-    # Bundled sample GPX routes (imported into the library on first launch).
-    resources:
+      # Bundled sample GPX routes (imported into the library on first launch).
+      # Folder reference — RouteStore loads from the SampleRoutes subdirectory.
       - path: SampleRoutes
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.trailapp
@@ -74,7 +76,7 @@ targets:
       - target: TrailAppWatch
 
   TrailAppWatch:
-    type: application.watchapp2
+    type: application
     platform: watchOS
     deploymentTarget: "10.0"
     sources:

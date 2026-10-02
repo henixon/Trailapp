@@ -16,7 +16,7 @@ struct RouteDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Map(position: $cameraPosition) {
                     MapPolyline(coordinates: route.coordinates)
-                        .stroke(.trailAccent, lineWidth: 4)
+                        .stroke(Color.trailAccent, lineWidth: 4)
                     if let first = route.coordinates.first {
                         Marker("Start", coordinate: first)
                     }
