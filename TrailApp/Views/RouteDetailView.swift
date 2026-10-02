@@ -16,7 +16,7 @@ struct RouteDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Map(position: $cameraPosition) {
                     MapPolyline(coordinates: route.coordinates)
-                        .stroke(.blue, lineWidth: 4)
+                        .stroke(.trailAccent, lineWidth: 4)
                     if let first = route.coordinates.first {
                         Marker("Start", coordinate: first)
                     }
@@ -69,15 +69,27 @@ struct RouteDetailView: View {
     private var statsRow: some View {
         HStack(spacing: 20) {
             StatCell(title: "Distance", value: formatDistance(route.stats.distance))
-            StatCell(title: "Ascent", value: "\(Int(route.stats.ascent)) m")
-            StatCell(title: "Descent", value: "\(Int(route.stats.descent)) m")
-            StatCell(title: "Cues", value: "\(cues.count)")
+            StatCell(
+                title: "Ascent",
+                // Unknown is not zero — never print a false 0 m.
+                value: route.hasElevationData ? "\(Int(route.stats.ascent)) m" : "—"
+            )
+            StatCell(title: "Est. time", value: estimatedTime)
         }
+    }
+
+    private var estimatedTime: String {
+        let ascent = route.hasElevationData ? route.stats.ascent : 0
+        let range = HikeEstimates.estimatedDuration(
+            distanceMeters: route.stats.distance,
+            ascentMeters: ascent
+        )
+        return HikeEstimates.formatRange(lower: range.lower, upper: range.upper)
     }
 
     private var cueList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Turn cues").font(.headline)
+            Text("Turn cues (\(cues.count))").font(.headline)
             if cues.isEmpty {
                 Text("No cues generated.").foregroundStyle(.secondary)
             } else {
@@ -109,6 +121,7 @@ struct RouteDetailView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.trailAccent)
             .disabled(!watchSync.canSend || sending)
 
             if !watchSync.canSend {
