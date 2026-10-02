@@ -80,7 +80,7 @@ final class RouteStore: ObservableObject {
             track = parsed.routePoints.map(\.point)
         }
 
-        var route = Route(
+        let route = Route(
             name: parsed.name
                 ?? dest.deletingPathExtension().lastPathComponent,
             points: track,

@@ -50,7 +50,7 @@ struct ContentView: View {
             .navigationTitle("TrailApp")
             .navigationDestination(for: UUID.self) { id in
                 if let package = sessionManager.package(id: id) {
-                    NavigationView(package: package)
+                    RoutePreviewView(package: package)
                 }
             }
             .navigationDestination(isPresented: $showFreeHike) {

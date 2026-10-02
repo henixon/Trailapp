@@ -14,6 +14,7 @@ struct NavigationView: View {
     @StateObject private var viewModel: NavigationViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showEndConfirm = false
+    @State private var isLocked = false
 
     init(package: RoutePackage) {
         _viewModel = StateObject(wrappedValue: NavigationViewModel(package: package))
@@ -44,6 +45,13 @@ struct NavigationView: View {
                 controls
             }
             .padding(8)
+
+            // Komoot-style screen lock: while locked, every touch is
+            // intercepted here so pause/stop can't be hit by accident.
+            // Navigation, voice, and haptics keep running underneath.
+            if isLocked {
+                lockOverlay
+            }
         }
         .navigationBarBackButtonHidden(true)
         .task {
@@ -183,10 +191,42 @@ struct NavigationView: View {
             }
             .buttonStyle(.bordered)
             .tint(.red)
+            Button {
+                isLocked = true
+            } label: {
+                Image(systemName: "lock.fill")
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.bordered)
+            .tint(.blue)
         }
         .padding(6)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// Full-screen touch shield. A stray tap does nothing; a deliberate
+    /// 1-second hold unlocks.
+    private var lockOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+            VStack(spacing: 8) {
+                Image(systemName: "lock.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(.white)
+                Text("Screen locked")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text("Hold to unlock")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+        .onLongPressGesture(minimumDuration: 1.0) {
+            isLocked = false
+            HapticAnnouncer.backOnRoute()
+        }
     }
 }
 
