@@ -51,7 +51,19 @@ final class RouteStore: ObservableObject {
 
     // MARK: - Import
 
+    /// Import failures always name the file and the reason.
+    enum ImportError: LocalizedError {
+        case failed(fileName: String, underlying: Error)
+        var errorDescription: String? {
+            switch self {
+            case .failed(let fileName, let underlying):
+                "Couldn't import \(fileName): \(underlying.localizedDescription)"
+            }
+        }
+    }
+
     /// Imports a GPX file, parses it, computes turn cues, and persists.
+    /// A route with a colliding name gets " 2", " 3", … — never a silent duplicate.
     /// - Returns: The imported route.
     @discardableResult
     func importGPX(from url: URL) throws -> Route {
@@ -64,35 +76,50 @@ final class RouteStore: ObservableObject {
             .appendingPathComponent("Routes")
             .appendingPathComponent(url.deletingPathExtension().lastPathComponent)
             .appendingPathExtension("gpx")
-        try fileManager.createDirectory(at: dest.deletingLastPathComponent(),
-                                        withIntermediateDirectories: true)
-        if fileManager.fileExists(atPath: dest.path) {
-            try fileManager.removeItem(at: dest)
+        do {
+            try fileManager.createDirectory(at: dest.deletingLastPathComponent(),
+                                            withIntermediateDirectories: true)
+            if fileManager.fileExists(atPath: dest.path) {
+                try fileManager.removeItem(at: dest)
+            }
+            try fileManager.copyItem(at: url, to: dest)
+
+            let parsed = try GPXParser.parse(url: dest)
+            let track: [RoutePoint]
+            if !parsed.trackPoints.isEmpty {
+                track = parsed.trackPoints
+            } else {
+                // Route-only GPX (no <trk>): treat the named route points as the track.
+                track = parsed.routePoints.map(\.point)
+            }
+
+            let baseName = parsed.name ?? dest.deletingPathExtension().lastPathComponent
+            let route = Route(
+                name: uniqueName(for: baseName),
+                points: track,
+                sourceFileName: dest.lastPathComponent
+            )
+            let cues = CueEngine.buildCues(track: track, gpxRoutePoints: parsed.routePoints)
+
+            routes.append(route)
+            cuesByRouteID[route.id] = cues
+            persist(route: route, cues: cues)
+            saveIndex()
+            return route
+        } catch {
+            // Don't leave the copied file behind on a failed import.
+            try? fileManager.removeItem(at: dest)
+            throw ImportError.failed(fileName: url.lastPathComponent, underlying: error)
         }
-        try fileManager.copyItem(at: url, to: dest)
+    }
 
-        let parsed = try GPXParser.parse(url: dest)
-        let track: [RoutePoint]
-        if !parsed.trackPoints.isEmpty {
-            track = parsed.trackPoints
-        } else {
-            // Route-only GPX (no <trk>): treat the named route points as the track.
-            track = parsed.routePoints.map(\.point)
-        }
-
-        let route = Route(
-            name: parsed.name
-                ?? dest.deletingPathExtension().lastPathComponent,
-            points: track,
-            sourceFileName: dest.lastPathComponent
-        )
-        let cues = CueEngine.buildCues(track: track, gpxRoutePoints: parsed.routePoints)
-
-        routes.append(route)
-        cuesByRouteID[route.id] = cues
-        persist(route: route, cues: cues)
-        saveIndex()
-        return route
+    /// "Maclehose" → "Maclehose 2" → "Maclehose 3" … first unused variant wins.
+    private func uniqueName(for base: String) -> String {
+        let existing = Set(routes.map(\.name))
+        guard existing.contains(base) else { return base }
+        var n = 2
+        while existing.contains("\(base) \(n)") { n += 1 }
+        return "\(base) \(n)"
     }
 
     func cues(for routeID: UUID) -> [TurnCue] {

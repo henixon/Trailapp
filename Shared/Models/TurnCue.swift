@@ -1,7 +1,7 @@
 import Foundation
 
 /// Direction of a turn cue.
-public enum TurnDirection: String, Codable, Equatable {
+public enum TurnDirection: String, Codable, Equatable, Hashable {
     case start
     case left
     case right
@@ -35,7 +35,7 @@ public enum TurnDirection: String, Codable, Equatable {
 }
 
 /// Where a cue came from.
-public enum CueSource: String, Codable, Equatable {
+public enum CueSource: String, Codable, Equatable, Hashable {
     /// From named <rtept> elements in the GPX file.
     case gpxWaypoint
     /// From bend detection on the track geometry.
@@ -45,7 +45,7 @@ public enum CueSource: String, Codable, Equatable {
 }
 
 /// A single turn cue anchored to a route point.
-public struct TurnCue: Codable, Identifiable, Equatable {
+public struct TurnCue: Codable, Identifiable, Equatable, Hashable {
     public var id: UUID
     /// Index into Route.points.
     public var routePointIndex: Int

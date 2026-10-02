@@ -2,7 +2,7 @@ import Foundation
 import CoreLocation
 
 /// A single track point on a route.
-public struct RoutePoint: Codable, Equatable {
+public struct RoutePoint: Codable, Equatable, Hashable {
     public var latitude: Double
     public var longitude: Double
     /// Elevation in meters, if present in the GPX.
@@ -26,7 +26,7 @@ public struct RoutePoint: Codable, Equatable {
 }
 
 /// Aggregate stats computed once at import time.
-public struct RouteStats: Codable, Equatable {
+public struct RouteStats: Codable, Equatable, Hashable {
     /// Total distance in meters.
     public var distance: Double
     /// Total ascent in meters.
@@ -58,7 +58,7 @@ public struct RouteStats: Codable, Equatable {
 }
 
 /// A hiking route imported from a GPX file.
-public struct Route: Codable, Identifiable, Equatable {
+public struct Route: Codable, Identifiable, Equatable, Hashable {
     public var id: UUID
     public var name: String
     public var points: [RoutePoint]
@@ -83,6 +83,12 @@ public struct Route: Codable, Identifiable, Equatable {
 
     public var coordinates: [CLLocationCoordinate2D] {
         points.map(\.coordinate)
+    }
+
+    /// True when at least one track point carries elevation. When false,
+    /// ascent/descent are unknown (not zero) and the UI must show "—".
+    public var hasElevationData: Bool {
+        points.contains { $0.elevation != nil }
     }
 
     /// Cumulative distance in meters at each point index.

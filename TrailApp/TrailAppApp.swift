@@ -16,7 +16,8 @@ struct TrailAppApp: App {
                     // The system copies the file into our Inbox; import from there.
                     Task { @MainActor in
                         do {
-                            try routeStore.importGPX(from: url)
+                            let route = try routeStore.importGPX(from: url)
+                            NotificationCenter.default.post(name: .didImportRoute, object: route)
                         } catch {
                             routeStore.lastError = error.localizedDescription
                         }
@@ -24,6 +25,11 @@ struct TrailAppApp: App {
                 }
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted with the imported `Route` as `object` after a successful import.
+    static let didImportRoute = Notification.Name("trailapp.didImportRoute")
 }
 
 extension UTType {

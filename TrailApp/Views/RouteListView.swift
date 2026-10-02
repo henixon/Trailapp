@@ -4,9 +4,10 @@ import UniformTypeIdentifiers
 struct RouteListView: View {
     @EnvironmentObject private var store: RouteStore
     @State private var showingImporter = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if store.routes.isEmpty {
                     ContentUnavailableView(
@@ -40,6 +41,9 @@ struct RouteListView: View {
             .navigationDestination(for: Route.self) { route in
                 RouteDetailView(route: route)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .didImportRoute)) { note in
+                if let route = note.object as? Route { path.append(route) }
+            }
             .fileImporter(
                 isPresented: $showingImporter,
                 allowedContentTypes: [.gpx],
@@ -47,20 +51,30 @@ struct RouteListView: View {
             ) { result in
                 switch result {
                 case .success(let urls):
+                    var imported: [Route] = []
                     for url in urls {
-                        do { try store.importGPX(from: url) }
+                        do { imported.append(try store.importGPX(from: url)) }
                         catch { store.lastError = error.localizedDescription }
                     }
+                    // Land on the newly imported route's detail screen.
+                    if let last = imported.last { path.append(last) }
                 case .failure(let error):
                     store.lastError = error.localizedDescription
                 }
             }
-            .alert("Import failed", isPresented: .constant(store.lastError != nil)) {
+            .alert("Import failed", isPresented: importFailedBinding) {
                 Button("OK") { store.lastError = nil }
             } message: {
                 Text(store.lastError ?? "")
             }
         }
+    }
+
+    private var importFailedBinding: Binding<Bool> {
+        Binding(
+            get: { store.lastError != nil },
+            set: { if !$0 { store.lastError = nil } }
+        )
     }
 }
 
